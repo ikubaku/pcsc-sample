@@ -1,0 +1,62 @@
+= pcsc-sample
+
+ikbk.netよもやま vol.01 「PC/SC対応NFCタグリーダーでスマートフォン内蔵NFC-FタグのIDmを取得する」のサンプルコードです。
+
+== 事前準備チェックリスト
+* PCSC liteをセットアップします
+* `pcscd.service` を開始します
+* カードリーダーとの通信を通常ユーザでもできるようにudevの設定をします
+* `plist.Info` を編集し、 `FEATURE_CCID_ESC_COMMAND` が使える状態にします
+
+== 使い方
+. `src/main.rs` 28行目を変更し、使用するカードリーダーの名前を設定します。
+. `cargo run` でプログラムを実行します。
+. 任意のNFC-Fタグをかざします。
+
+カードリーダーの名前は `pcsc_scan` などで得られる名前を入力します。
+例えばカードリーダーを繋いだあとに `pcsc_scan` を実行します。
+
+[,text]
+----
+PC/SC device scanner
+V 1.6.2 (c) 2001-2022, Ludovic Rousseau <ludovic.rousseau@free.fr>
+Using reader plug'n play mechanism
+Scanning present readers...
+0: Yubico YubiKey OTP+FIDO+CCID 00 00
+1: SONY FeliCa RC-S300/P (0201504) 01 00
+----
+
+起動すると最初の方にすでに接続されているカードリーダーの一覧が出力されるので、その中から所望のカードリーダを探します。
+どのカードリーダーがどの名前に対応するのかわからない場合は一度カードリーダーをつなぎ直して、表示されるカードリーダー名を使います。
+そして *名称の後ろについている数値2つを除いた部分* を `main.rs` に書きます。
+例えば上の出力にある1番目のカードリーダー、Felica RC-S300/Pを使いたい場合は `main.rs` を次のように編集します。
+
+[,rust]
+----
+let mut reader_session = ReaderSession::start_session_for_reader("SONY FeliCa RC-S300/P (0201504)")?;
+----
+
+ぜひおサイフケータイ対応デバイスで試してみてください。NFC-Fカードと他規格のカードを重ねても動作を見れますが、うまくいかないこともあります。
+
+== 出力例
+[,text]
+----
+2023-11-07T14:38:04.130506Z  INFO pcsc_sample: Starting sample...
+2023-11-07T14:38:04.134173Z  INFO pcsc_sample::pcsc: Found matching reader: "SONY FeliCa RC-S300/P (0201504) 01 00"
+2023-11-07T14:38:04.137306Z DEBUG pcsc_sample::pcsc: Acquired CCID escape code: 1107296257
+2023-11-07T14:38:06.145226Z  INFO pcsc_sample::pcsc: No response from ICC.
+2023-11-07T14:38:08.151550Z  INFO pcsc_sample::pcsc: No response from ICC.
+2023-11-07T14:38:09.159453Z  INFO pcsc_sample::pcsc: Found a NFC-F card.
+IDm: [...]
+2023-11-07T14:38:10.168039Z  INFO pcsc_sample::pcsc: Found a NFC-F card.
+IDm: [...]
+2023-11-07T14:38:11.175879Z  INFO pcsc_sample::pcsc: Found a NFC-F card.
+IDm: [...]
+2023-11-07T14:38:12.184083Z  INFO pcsc_sample::pcsc: Found a NFC-F card.
+IDm: [...]
+2023-11-07T14:38:14.188696Z  INFO pcsc_sample::pcsc: No response from ICC.
+2023-11-07T14:38:16.193794Z  INFO pcsc_sample::pcsc: No response from ICC.
+----
+
+== ライセンス
+本プログラムはThe MIT Licenseの元で提供されます。詳しくは本リポジトリルートディレクトリの `LICENSE` をご覧ください。
